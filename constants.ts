@@ -3,9 +3,9 @@ import { MeasurementType } from './types';
 export const APP_NAME = "FitTrack Rutinas";
 
 // --- MOCK USER EMAILS/NAMES (FOR DEMO LOGIN PREFILL - AUTH IS VIA FIREBASE) ---
-export const MOCK_SUPER_COACH_EMAIL = "Jcarrerap@gmail.com"; // Real email for Super Coach
+export const MOCK_SUPER_COACH_EMAIL = "jcarrerap@gmail.com"; // Real email for Super Coach - ensure lowercase
 export const MOCK_SUPER_COACH_NAME = "Jair"; // Real name for Super Coach
-// Password for Jcarrerap@gmail.com MUST be set directly in Firebase Authentication.
+// Password for jcarrerap@gmail.com MUST be set directly in Firebase Authentication.
 
 export const MOCK_COACH_EMAIL = "coach@example.com"; // Example coach email
 export const MOCK_COACH_NAME = "Entrenador Alex";
