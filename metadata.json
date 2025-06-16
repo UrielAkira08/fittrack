@@ -1,0 +1,6 @@
+
+{
+  "name": "FitTrack - Rutinas Personalizadas",
+  "description": "Una aplicación web para que los entrenadores de fitness creen y gestionen rutinas de entrenamiento personalizadas para sus clientes, y para que los clientes sigan su progreso.",
+  "requestFramePermissions": []
+}
