@@ -30,70 +30,86 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(true);
       if (fbUser) {
         setFirebaseUser(fbUser);
-        // Fetch app-specific user profile from Firestore
+        console.log(`[AuthContext] Auth state changed. Firebase User: ${fbUser.uid}, Email: ${fbUser.email}`);
         try {
           const userDocRef = doc(db, 'users', fbUser.uid);
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            setUser({
-              id: fbUser.uid, // Firebase UID
-              email: fbUser.email || userData.email, // Prefer fbUser.email, fallback to stored
-              name: userData.name,
-              role: userData.role as UserRole,
-            });
+            console.log(`[AuthContext] Firestore user data for ${fbUser.uid}:`, JSON.stringify(userData));
+            
+            const userRoleFromFirestore = userData.role as UserRole;
+            console.log(`[AuthContext] Role from Firestore for ${fbUser.uid}: '${userRoleFromFirestore}'`);
+
+            if (!userData.name || !userData.role) {
+              console.error(`[AuthContext] Firestore document for ${fbUser.uid} is missing 'name' or 'role'. UserData:`, userData);
+              await firebaseSignOut(auth); 
+              setUser(null);
+              setFirebaseUser(null);
+            } else {
+              setUser({
+                id: fbUser.uid,
+                email: fbUser.email || userData.email, 
+                name: userData.name,
+                role: userRoleFromFirestore,
+              });
+              console.log(`[AuthContext] App user state set for ${fbUser.uid} with role '${userRoleFromFirestore}'`);
+            }
           } else {
-            console.warn(`No user profile found in Firestore for UID: ${fbUser.uid}. Logging out.`);
-            // This case might happen if user was created in Auth but not in Firestore, or data inconsistency
-            await firebaseSignOut(auth); // Force logout
+            console.warn(`[AuthContext] No user profile found in Firestore for UID: ${fbUser.uid}. Logging out user from app.`);
+            await firebaseSignOut(auth); 
             setUser(null);
             setFirebaseUser(null);
           }
         } catch (error) {
-            console.error("Error fetching user profile from Firestore:", error);
-            await firebaseSignOut(auth); // Force logout on error
+            console.error("[AuthContext] Error fetching user profile from Firestore:", error);
+            await firebaseSignOut(auth); 
             setUser(null);
             setFirebaseUser(null);
         }
       } else {
+        console.log("[AuthContext] Auth state changed. No Firebase user.");
         setUser(null);
         setFirebaseUser(null);
       }
       setLoading(false);
     });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe(); 
   }, []);
 
   const login = async (email: string, password_provided: string): Promise<{ success: boolean; message?: string }> => {
     setLoading(true);
+    console.log(`[AuthContext] Attempting login for email: ${email}`);
     try {
       await signInWithEmailAndPassword(auth, email, password_provided);
       // onAuthStateChanged will handle setting user and firebaseUser state
+      console.log(`[AuthContext] Firebase signInWithEmailAndPassword successful for ${email}. Waiting for onAuthStateChanged.`);
       setLoading(false);
       return { success: true };
     } catch (error: any) {
       setLoading(false);
-      // Firebase provides error codes and messages
       let friendlyMessage = 'Error de inicio de sesión. Verifica tus credenciales.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         friendlyMessage = 'Correo electrónico o contraseña incorrectos.';
       } else if (error.code === 'auth/invalid-email') {
         friendlyMessage = 'El formato del correo electrónico no es válido.';
       }
-      console.error("Firebase login error:", error.code, error.message);
+      console.error("[AuthContext] Firebase login error:", error.code, error.message);
       return { success: false, message: friendlyMessage };
     }
   };
 
   const logout = async (): Promise<void> => {
     setLoading(true);
+    console.log("[AuthContext] Attempting logout.");
     try {
       await firebaseSignOut(auth);
+      console.log("[AuthContext] Firebase signOut successful. Waiting for onAuthStateChanged.");
       // onAuthStateChanged will handle setting user and firebaseUser to null
     } catch (error) {
-      console.error("Firebase logout error:", error);
+      console.error("[AuthContext] Firebase logout error:", error);
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 
