@@ -359,14 +359,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const newClientUID = userCredential.user.uid;
 
         // Create user profile in Firestore 'users' collection
-        const newClientUserForUsersCollection: User = {
-            id: newClientUID,
+        const newClientUserForUsersCollection: Omit<User, 'id'> & {uid: string, createdAt: any} = { // Use Omit to exclude 'id' then add uid
+            uid: newClientUID, // Explicitly provide uid
             email: clientDetails.email,
-            name: clientDetails.name,
-            role: UserRole.CLIENT
+            name: clientDetails.name, // Ensure this field matches what AuthContext expects (name vs nombre)
+            role: UserRole.CLIENT,
+            createdAt: serverTimestamp() 
         };
-        // Explicitly add uid field to the document, and coachId for client users.
-        await setDoc(doc(db, 'users', newClientUID), { ...newClientUserForUsersCollection, uid: newClientUID, coachId, createdAt: serverTimestamp() }); 
+        await setDoc(doc(db, 'users', newClientUID), newClientUserForUsersCollection); 
         
         // Create client profile in Firestore 'clientProfiles' collection
         const newClientProfile: ClientProfile = {
