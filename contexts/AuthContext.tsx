@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { auth, db } from '../firebase'; // Firebase setup
 import { 
@@ -41,8 +42,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const userRoleFromFirestore = userData.role as UserRole;
             console.log(`[AuthContext] Role from Firestore for ${fbUser.uid}: '${userRoleFromFirestore}'`);
 
-            if (!userData.nombre || !userData.role) { 
-              console.error(`[AuthContext] Firestore document for ${fbUser.uid} is missing 'nombre' or 'role'. UserData:`, userData);
+            // Expect 'name' (English) field from Firestore now
+            if (!userData.name || !userData.role) { 
+              console.error(`[AuthContext] Firestore document for ${fbUser.uid} is missing 'name' or 'role'. UserData:`, userData);
               await firebaseSignOut(auth); 
               setUser(null);
               setFirebaseUser(null);
@@ -50,10 +52,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               setUser({
                 id: fbUser.uid,
                 email: fbUser.email || userData.email, 
-                name: userData.nombre, 
+                name: userData.name, // Use 'name' (English)
                 role: userRoleFromFirestore,
               });
-              console.log(`[AuthContext] App user state set for ${fbUser.uid} with role '${userRoleFromFirestore}' and name '${userData.nombre}'`);
+              console.log(`[AuthContext] App user state set for ${fbUser.uid} with role '${userRoleFromFirestore}' and name '${userData.name}'`);
             }
           } else {
             console.warn(`[AuthContext] No user profile found in Firestore for UID: ${fbUser.uid}. Logging out user from app.`);
@@ -83,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await signInWithEmailAndPassword(auth, email, password_provided);
       console.log(`[AuthContext] Firebase signInWithEmailAndPassword successful for ${email}. Waiting for onAuthStateChanged.`);
-      setLoading(false);
+      // setLoading(false); // setLoading will be handled by onAuthStateChanged
       return { success: true };
     } catch (error: any) {
       setLoading(false);
@@ -104,10 +106,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await firebaseSignOut(auth);
       console.log("[AuthContext] Firebase signOut successful. Waiting for onAuthStateChanged.");
+      // setUser(null) and setFirebaseUser(null) will be handled by onAuthStateChanged
     } catch (error) {
       console.error("[AuthContext] Firebase logout error:", error);
     } finally {
-      setLoading(false); 
+      // setLoading(false); // setLoading will be handled by onAuthStateChanged
     }
   };
 
